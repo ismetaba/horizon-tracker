@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 const nav = [
@@ -35,9 +36,12 @@ export default function Sidebar() {
 
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-zinc-200 bg-zinc-50 md:flex md:flex-col dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="flex h-16 items-center gap-2 border-b border-zinc-200 px-6 dark:border-zinc-800">
-          <span className="text-xl">🏗️</span>
-          <h1 className="text-lg font-bold tracking-tight">Horizon Tracker</h1>
+        <div className="flex h-20 items-center gap-3 border-b border-zinc-200 px-4 dark:border-zinc-800">
+          <Image src="/horizon-tracker/logo.png" alt="Horizon İnşaat" width={48} height={48} className="rounded-lg" />
+          <div>
+            <h1 className="text-sm font-bold leading-tight tracking-tight">Horizon İnşaat</h1>
+            <p className="text-[10px] text-zinc-400">Ödeme & Harcama Takip</p>
+          </div>
         </div>
         <nav className="flex flex-1 flex-col gap-1 p-4">
           {nav.map(n => (
@@ -56,7 +60,7 @@ export default function Sidebar() {
           ))}
         </nav>
         <div className="border-t border-zinc-200 px-6 py-4 text-xs text-zinc-400 dark:border-zinc-800">
-          Horizon Ödeme & Harcama Takip
+          Horizon İnşaat
         </div>
       </aside>
     </>

@@ -115,18 +115,20 @@ export default function OdemelerPage() {
             {k.odemeler.length > 0 ? (
               <div className="mt-4 space-y-2">
                 {k.odemeler.sort((a, b) => a.tarih.localeCompare(b.tarih)).map(o => (
-                  <div key={o.id} className="flex items-center gap-3 rounded-lg bg-zinc-50 px-3 py-2 text-sm dark:bg-zinc-800/50">
-                    <span className="w-24 shrink-0 text-zinc-500">{formatDate(o.tarih)}</span>
-                    <div className="flex flex-1 items-center gap-4">
-                      <span className="font-semibold tabular-nums text-blue-600 dark:text-blue-400">₺{formatTL(o.tlTutar)}</span>
-                      <span className="text-xs text-zinc-400">+</span>
-                      <span className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">₺{formatTL(o.tlTutar)}</span>
-                      <span className="text-xs text-zinc-400">=</span>
-                      <span className="font-bold tabular-nums">₺{formatTL(o.tlTutar * 2)}</span>
+                  <div key={o.id} className="rounded-lg bg-zinc-50 px-3 py-2.5 text-sm dark:bg-zinc-800/50">
+                    <div className="flex items-center justify-between">
+                      <span className="text-zinc-500">{formatDate(o.tarih)}</span>
+                      <button onClick={() => handleDelete(o.id)} className="rounded-lg p-1 text-zinc-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950">
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
                     </div>
-                    <button onClick={() => handleDelete(o.id)} className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950">
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
+                    <div className="mt-1 flex items-baseline gap-1.5 text-xs">
+                      <span className="font-semibold tabular-nums text-blue-600 dark:text-blue-400">₺{formatTL(o.tlTutar)}</span>
+                      <span className="text-zinc-400">+</span>
+                      <span className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">₺{formatTL(o.tlTutar)}</span>
+                      <span className="text-zinc-400">=</span>
+                      <span className="font-bold tabular-nums text-sm">₺{formatTL(o.tlTutar * 2)}</span>
+                    </div>
                   </div>
                 ))}
               </div>

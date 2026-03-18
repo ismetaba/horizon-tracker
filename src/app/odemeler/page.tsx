@@ -1,22 +1,28 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { getOdemeler, addOdeme, deleteOdeme, getKur, formatTL, formatUSD, formatDate, getMonthKey, getUniqueMonths, KISILER, type Odeme } from '@/lib/store';
+import { getOdemeler, getKurlar, addOdeme, deleteOdeme, findKur, formatTL, formatUSD, formatDate, getMonthKey, getUniqueMonths, KISILER, type Odeme, type Kur } from '@/lib/store';
 import Modal from '@/components/Modal';
 import MonthTabs from '@/components/MonthTabs';
 
 export default function OdemelerPage() {
-  const [mounted, setMounted] = useState(false);
   const [data, setData] = useState<Odeme[]>([]);
+  const [kurlar, setKurlar] = useState<Kur[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [filterKisi, setFilterKisi] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('');
   const [form, setForm] = useState({ tarih: '', kisi: KISILER[0], tlTutar: '' });
 
-  const reload = useCallback(() => setData(getOdemeler()), []);
-  useEffect(() => { setMounted(true); reload(); }, [reload]);
+  const reload = useCallback(async () => {
+    const [o, k] = await Promise.all([getOdemeler(), getKurlar()]);
+    setData(o);
+    setKurlar(k);
+    setLoading(false);
+  }, []);
+  useEffect(() => { reload(); }, [reload]);
 
-  if (!mounted) return <div className="flex h-full items-center justify-center p-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" /></div>;
+  if (loading) return <div className="flex h-full items-center justify-center p-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" /></div>;
 
   const months = getUniqueMonths(data);
   const monthTotals: Record<string, number> = {};
@@ -26,62 +32,48 @@ export default function OdemelerPage() {
   const filtered = filterKisi ? monthFiltered.filter(o => o.kisi === filterKisi) : monthFiltered;
 
   const toplamBizimTL = filtered.reduce((s, o) => s + o.tlTutar, 0);
-  const toplamBizimUSD = filtered.reduce((s, o) => s + o.tlTutar / getKur(o.tarih), 0);
-  // Müteahhit her zaman aynı tutarı ödemiş kabul
+  const toplamBizimUSD = filtered.reduce((s, o) => s + o.tlTutar / findKur(kurlar, o.tarih), 0);
   const toplamMuteahhitTL = toplamBizimTL;
   const toplamGenel = toplamBizimTL + toplamMuteahhitTL;
 
-  // Group by person - TÜM kişileri göster (0 olsa bile)
   const kisiGrup = KISILER.map(kisi => {
     const kisiFiltered = filtered.filter(o => o.kisi === kisi);
     const tl = kisiFiltered.reduce((s, o) => s + o.tlTutar, 0);
-    const usd = kisiFiltered.reduce((s, o) => s + o.tlTutar / getKur(o.tarih), 0);
+    const usd = kisiFiltered.reduce((s, o) => s + o.tlTutar / findKur(kurlar, o.tarih), 0);
     return { kisi, odemeler: kisiFiltered, tl, usd, sayi: kisiFiltered.length };
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.tarih || !form.tlTutar) return;
-    addOdeme({ tarih: form.tarih, kisi: form.kisi, tlTutar: parseFloat(form.tlTutar) });
+    await addOdeme({ tarih: form.tarih, kisi: form.kisi, tlTutar: parseFloat(form.tlTutar) });
     setForm({ tarih: '', kisi: KISILER[0], tlTutar: '' });
     setShowModal(false);
     reload();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Bu ödemeyi silmek istediğinize emin misiniz?')) {
-      deleteOdeme(id);
+      await deleteOdeme(id);
       reload();
     }
   };
 
   return (
     <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-      {/* Header */}
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Ödemeler</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">{filtered.length} kayıt</p>
-        </div>
+        <div><h1 className="text-2xl font-bold">Ödemeler</h1><p className="text-sm text-zinc-500 dark:text-zinc-400">{filtered.length} kayıt</p></div>
         <div className="flex gap-3">
-          <select value={filterKisi} onChange={e => setFilterKisi(e.target.value)}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900">
+          <select value={filterKisi} onChange={e => setFilterKisi(e.target.value)} className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900">
             <option value="">Tüm Kişiler</option>
             {KISILER.map(k => <option key={k} value={k}>{k}</option>)}
           </select>
-          <button onClick={() => setShowModal(true)}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
-            + Yeni Ödeme
-          </button>
+          <button onClick={() => setShowModal(true)} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">+ Yeni Ödeme</button>
         </div>
       </div>
 
-      {/* Month Tabs */}
-      <div className="mb-6">
-        <MonthTabs months={months} selected={selectedMonth} onSelect={setSelectedMonth} totals={monthTotals} accentColor="blue" />
-      </div>
+      <div className="mb-6"><MonthTabs months={months} selected={selectedMonth} onSelect={setSelectedMonth} totals={monthTotals} accentColor="blue" /></div>
 
-      {/* Summary Cards */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-5 dark:border-blue-900/50 dark:bg-blue-950/30">
           <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Bizim Taraf</p>
@@ -100,49 +92,26 @@ export default function OdemelerPage() {
         </div>
       </div>
 
-      {/* Person Cards - TÜM kişiler her zaman gösterilir */}
       <div className="space-y-4">
         {kisiGrup.map(k => (
           <div key={k.kisi} className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                  {k.kisi.charAt(0)}
-                </div>
-                <div>
-                  <p className="text-lg font-bold">{k.kisi}</p>
-                  <p className="text-xs text-zinc-400">{k.sayi} ödeme</p>
-                </div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700 dark:bg-blue-900 dark:text-blue-300">{k.kisi.charAt(0)}</div>
+                <div><p className="text-lg font-bold">{k.kisi}</p><p className="text-xs text-zinc-400">{k.sayi} ödeme</p></div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-zinc-500">Kişi Başı Toplam</p>
-                <p className="text-xl font-bold tabular-nums">₺{formatTL(k.tl)}</p>
-              </div>
+              <div className="text-right"><p className="text-sm text-zinc-500">Kişi Başı Toplam</p><p className="text-xl font-bold tabular-nums">₺{formatTL(k.tl)}</p></div>
             </div>
-
-            {/* Comparison bars */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="mb-1 flex items-center justify-between text-xs">
-                  <span className="font-medium text-blue-600 dark:text-blue-400">Bizim Taraf</span>
-                  <span className="font-bold tabular-nums">₺{formatTL(k.tl)}</span>
-                </div>
-                <div className="h-3 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                  <div className="h-full rounded-full bg-blue-500" style={{ width: k.tl > 0 ? '100%' : '0%' }} />
-                </div>
+                <div className="mb-1 flex items-center justify-between text-xs"><span className="font-medium text-blue-600 dark:text-blue-400">Bizim Taraf</span><span className="font-bold tabular-nums">₺{formatTL(k.tl)}</span></div>
+                <div className="h-3 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"><div className="h-full rounded-full bg-blue-500" style={{ width: k.tl > 0 ? '100%' : '0%' }} /></div>
               </div>
               <div>
-                <div className="mb-1 flex items-center justify-between text-xs">
-                  <span className="font-medium text-emerald-600 dark:text-emerald-400">Müteahhit Tarafı</span>
-                  <span className="font-bold tabular-nums">₺{formatTL(k.tl)}</span>
-                </div>
-                <div className="h-3 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                  <div className="h-full rounded-full bg-emerald-500" style={{ width: k.tl > 0 ? '100%' : '0%' }} />
-                </div>
+                <div className="mb-1 flex items-center justify-between text-xs"><span className="font-medium text-emerald-600 dark:text-emerald-400">Müteahhit Tarafı</span><span className="font-bold tabular-nums">₺{formatTL(k.tl)}</span></div>
+                <div className="h-3 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"><div className="h-full rounded-full bg-emerald-500" style={{ width: k.tl > 0 ? '100%' : '0%' }} /></div>
               </div>
             </div>
-
-            {/* Payment detail rows */}
             {k.odemeler.length > 0 ? (
               <div className="mt-4 space-y-2">
                 {k.odemeler.sort((a, b) => a.tarih.localeCompare(b.tarih)).map(o => (
@@ -162,37 +131,18 @@ export default function OdemelerPage() {
                 ))}
               </div>
             ) : (
-              <div className="mt-4 rounded-lg bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-400 dark:bg-zinc-800/50">
-                Bu dönemde ödeme yok
-              </div>
+              <div className="mt-4 rounded-lg bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-400 dark:bg-zinc-800/50">Bu dönemde ödeme yok</div>
             )}
           </div>
         ))}
       </div>
 
-      {/* Add Modal */}
       <Modal open={showModal} onClose={() => setShowModal(false)} title="Yeni Ödeme Ekle">
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Tarih</label>
-            <input type="date" required value={form.tarih} onChange={e => setForm({ ...form, tarih: e.target.value })}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800" />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Kişi</label>
-            <select value={form.kisi} onChange={e => setForm({ ...form, kisi: e.target.value })}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800">
-              {KISILER.map(k => <option key={k} value={k}>{k}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">TL Tutar</label>
-            <input type="number" step="0.01" required value={form.tlTutar} onChange={e => setForm({ ...form, tlTutar: e.target.value })}
-              placeholder="300000" className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800" />
-          </div>
-          <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700">
-            Ekle
-          </button>
+          <div><label className="mb-1 block text-sm font-medium">Tarih</label><input type="date" required value={form.tarih} onChange={e => setForm({ ...form, tarih: e.target.value })} className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800" /></div>
+          <div><label className="mb-1 block text-sm font-medium">Kişi</label><select value={form.kisi} onChange={e => setForm({ ...form, kisi: e.target.value })} className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800">{KISILER.map(k => <option key={k} value={k}>{k}</option>)}</select></div>
+          <div><label className="mb-1 block text-sm font-medium">TL Tutar</label><input type="number" step="0.01" required value={form.tlTutar} onChange={e => setForm({ ...form, tlTutar: e.target.value })} placeholder="300000" className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800" /></div>
+          <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700">Ekle</button>
         </form>
       </Modal>
     </div>

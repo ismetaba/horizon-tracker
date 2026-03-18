@@ -181,6 +181,42 @@ export function deleteHarcama(id: string) {
   saveHarcamalar(getHarcamalar().filter(h => h.id !== id));
 }
 
+// --- Month Utilities ---
+export const AY_ISIMLERI = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+
+export function getMonthKey(tarih: string): string {
+  return tarih.slice(0, 7);
+}
+
+export function formatMonthLabel(monthKey: string): string {
+  const [y, m] = monthKey.split('-');
+  return `${AY_ISIMLERI[parseInt(m, 10) - 1]} ${y}`;
+}
+
+export function getUniqueMonths(records: { tarih: string }[]): string[] {
+  const set = new Set(records.map(r => getMonthKey(r.tarih)));
+  return Array.from(set).sort();
+}
+
+// --- Müteahhit State ---
+export function getMuteahhitDurumu(): Record<string, boolean> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem('horizon_muteahhit_durumu');
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function setMuteahhitOdendi(odemeId: string, odendi: boolean) {
+  if (typeof window === 'undefined') return;
+  const durumu = getMuteahhitDurumu();
+  if (odendi) durumu[odemeId] = true;
+  else delete durumu[odemeId];
+  localStorage.setItem('horizon_muteahhit_durumu', JSON.stringify(durumu));
+}
+
 export function getKur(tarih: string): number {
   const kurlar = getKurlar().sort((a, b) => a.tarih.localeCompare(b.tarih));
   let closest = kurlar[0]?.usdTl || 1;

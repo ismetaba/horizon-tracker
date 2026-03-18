@@ -14,12 +14,20 @@ export default function Dashboard() {
   const kurlar = getKurlar();
   const sonKur = kurlar.length ? kurlar[kurlar.length - 1].usdTl : 1;
 
-  const toplamOdemeTL = odemeler.reduce((s, o) => s + o.tlTutar, 0);
-  const toplamOdemeUSD = odemeler.reduce((s, o) => s + o.tlTutar / getKur(o.tarih), 0);
+  // Bizim ödemeler
+  const bizimOdemeTL = odemeler.reduce((s, o) => s + o.tlTutar, 0);
+  const bizimOdemeUSD = odemeler.reduce((s, o) => s + o.tlTutar / getKur(o.tarih), 0);
+  // Müteahhit aynı tutarı ödemiş kabul
+  const muteahhitOdemeTL = bizimOdemeTL;
+  // Toplam giren para (bizim + müteahhit)
+  const toplamGirenTL = bizimOdemeTL + muteahhitOdemeTL;
+
+  // Toplam harcamalar
   const toplamHarcamaTL = harcamalar.reduce((s, h) => s + h.tlTutar, 0);
   const toplamHarcamaUSD = harcamalar.reduce((s, h) => s + h.tlTutar / getKur(h.tarih), 0);
-  const genelToplamTL = toplamOdemeTL + toplamHarcamaTL;
-  const genelToplamUSD = toplamOdemeUSD + toplamHarcamaUSD;
+
+  // Kasadaki para = Toplam giren - Toplam harcama
+  const kasaTL = toplamGirenTL - toplamHarcamaTL;
 
   const kisiOzet = KISILER.map(k => {
     const kisiOdemeleri = odemeler.filter(o => o.kisi === k);
@@ -34,7 +42,6 @@ export default function Dashboard() {
     return { kategori: k, tl, sayi: items.length };
   }).filter(k => k.sayi > 0).sort((a, b) => b.tl - a.tl);
 
-  // Color map for categories
   const katColors: Record<string, string> = {
     Mimar: 'bg-blue-500', Emlakci: 'bg-emerald-500', Arsa: 'bg-violet-500',
     Diger: 'bg-zinc-400', Noter: 'bg-amber-500', Ifraz: 'bg-rose-500',
@@ -47,61 +54,80 @@ export default function Dashboard() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Horizon İnşaat - Ödeme & Harcama Özeti</p>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Horizon İnşaat - Genel Bakış</p>
       </div>
 
-      {/* Hero: Genel Toplam */}
-      <div className="mb-8 rounded-2xl bg-gradient-to-br from-zinc-900 to-zinc-800 p-8 text-white shadow-xl dark:from-zinc-800 dark:to-zinc-700">
-        <p className="text-sm font-medium uppercase tracking-widest text-zinc-400">Genel Toplam Harcama</p>
-        <p className="mt-2 text-5xl font-black tabular-nums tracking-tight">₺{formatTL(genelToplamTL)}</p>
-        <p className="mt-1 text-xl font-medium tabular-nums text-zinc-300">${formatUSD(genelToplamUSD)}</p>
-        <div className="mt-5 flex flex-wrap gap-6 text-sm">
-          <div>
-            <span className="text-zinc-400">Güncel Kur</span>
-            <span className="ml-2 font-bold text-emerald-400">{sonKur.toFixed(2)} USD/TL</span>
+      {/* 3 Hero Cards: Bizim Ödemeler → Toplam Harcama → Kasa */}
+      <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Bizim Ödemeler */}
+        <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6 text-white shadow-xl">
+          <p className="text-sm font-medium uppercase tracking-widest text-blue-200">Bizim Ödemeler</p>
+          <p className="mt-2 text-4xl font-black tabular-nums tracking-tight">₺{formatTL(bizimOdemeTL)}</p>
+          <p className="mt-1 text-lg tabular-nums text-blue-200">${formatUSD(bizimOdemeUSD)}</p>
+          <div className="mt-4 flex items-center gap-2 text-sm text-blue-200">
+            <span>{odemeler.length} ödeme</span>
+            <span className="text-blue-300">|</span>
+            <span>{KISILER.length} kişi</span>
           </div>
-          <div>
-            <span className="text-zinc-400">Ödeme Kayıtları</span>
-            <span className="ml-2 font-bold">{odemeler.length}</span>
+        </div>
+
+        {/* Toplam Harcama */}
+        <div className="rounded-2xl bg-gradient-to-br from-amber-600 to-amber-700 p-6 text-white shadow-xl">
+          <p className="text-sm font-medium uppercase tracking-widest text-amber-200">Toplam Harcama</p>
+          <p className="mt-2 text-4xl font-black tabular-nums tracking-tight">₺{formatTL(toplamHarcamaTL)}</p>
+          <p className="mt-1 text-lg tabular-nums text-amber-200">${formatUSD(toplamHarcamaUSD)}</p>
+          <div className="mt-4 flex items-center gap-2 text-sm text-amber-200">
+            <span>{harcamalar.length} kayıt</span>
+            <span className="text-amber-300">|</span>
+            <span>{kategoriOzet.length} kategori</span>
           </div>
-          <div>
-            <span className="text-zinc-400">Harcama Kayıtları</span>
-            <span className="ml-2 font-bold">{harcamalar.length}</span>
+        </div>
+
+        {/* Kasa Durumu */}
+        <div className={`rounded-2xl p-6 text-white shadow-xl ${kasaTL >= 0 ? 'bg-gradient-to-br from-emerald-600 to-emerald-700' : 'bg-gradient-to-br from-red-600 to-red-700'}`}>
+          <p className={`text-sm font-medium uppercase tracking-widest ${kasaTL >= 0 ? 'text-emerald-200' : 'text-red-200'}`}>Kasada Kalan</p>
+          <p className="mt-2 text-4xl font-black tabular-nums tracking-tight">₺{formatTL(Math.abs(kasaTL))}</p>
+          {kasaTL < 0 && <p className="mt-1 text-lg font-medium text-red-200">Eksi bakiye!</p>}
+          <div className={`mt-4 text-sm ${kasaTL >= 0 ? 'text-emerald-200' : 'text-red-200'}`}>
+            <p>Giren: ₺{formatTL(toplamGirenTL)}</p>
+            <p className="text-xs opacity-75">(Bizim ₺{formatTL(bizimOdemeTL)} + Müteahhit ₺{formatTL(muteahhitOdemeTL)})</p>
           </div>
         </div>
       </div>
 
-      {/* Two big cards: Odemeler + Harcamalar */}
-      <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Odemeler Card */}
-        <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-6 dark:border-blue-900/50 dark:bg-blue-950/30">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-blue-900 dark:text-blue-200">Ödemeler</h2>
-            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-300">{odemeler.length} kayıt</span>
-          </div>
-          <p className="mt-3 text-4xl font-extrabold tabular-nums text-blue-700 dark:text-blue-300">₺{formatTL(toplamOdemeTL)}</p>
-          <p className="mt-0.5 text-lg tabular-nums text-blue-500/70">${formatUSD(toplamOdemeUSD)}</p>
-        </div>
+      {/* Müteahhit bilgi notu */}
+      <div className="mb-8 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300">
+        Müteahhit tarafı bizim ödemelerimizle 1:1 eşleşme olarak kabul edilmektedir. Toplam giren para = Bizim + Müteahhit = ₺{formatTL(toplamGirenTL)}
+      </div>
 
-        {/* Harcamalar Card */}
-        <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-6 dark:border-amber-900/50 dark:bg-amber-950/30">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-amber-900 dark:text-amber-200">Harcamalar</h2>
-            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900 dark:text-amber-300">{harcamalar.length} kayıt</span>
-          </div>
-          <p className="mt-3 text-4xl font-extrabold tabular-nums text-amber-700 dark:text-amber-300">₺{formatTL(toplamHarcamaTL)}</p>
-          <p className="mt-0.5 text-lg tabular-nums text-amber-500/70">${formatUSD(toplamHarcamaUSD)}</p>
+      {/* Kur ve özet */}
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="text-xs text-zinc-500">Güncel USD/TL</p>
+          <p className="mt-1 text-2xl font-bold">{sonKur.toFixed(2)}</p>
+        </div>
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="text-xs text-zinc-500">Toplam Giren (TL)</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums">₺{formatTL(toplamGirenTL)}</p>
+        </div>
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="text-xs text-zinc-500">Toplam Çıkan (TL)</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums">₺{formatTL(toplamHarcamaTL)}</p>
+        </div>
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="text-xs text-zinc-500">Harcama Oranı</p>
+          <p className="mt-1 text-2xl font-bold">{toplamGirenTL > 0 ? ((toplamHarcamaTL / toplamGirenTL) * 100).toFixed(1) : 0}%</p>
         </div>
       </div>
 
-      {/* Two tables side by side */}
+      {/* Two sections side by side */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Kisi Bazli Odemeler */}
+        {/* Kişi Bazlı Ödemeler - TÜM kişiler */}
         <div>
           <h2 className="mb-4 text-xl font-bold">Kişi Bazlı Ödemeler</h2>
           <div className="space-y-3">
             {kisiOzet.map(k => {
-              const pct = toplamOdemeTL > 0 ? (k.tl / toplamOdemeTL) * 100 : 0;
+              const pct = bizimOdemeTL > 0 ? (k.tl / bizimOdemeTL) * 100 : 0;
               return (
                 <div key={k.kisi} className="rounded-xl border border-zinc-200 bg-white p-4 transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
                   <div className="flex items-center justify-between">
@@ -115,8 +141,8 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold tabular-nums">₺{formatTL(k.tl)}</p>
-                      <p className="text-xs tabular-nums text-zinc-400">${formatUSD(k.usd)}</p>
+                      <p className="text-lg font-bold tabular-nums">{k.tl > 0 ? `₺${formatTL(k.tl)}` : '₺0,00'}</p>
+                      <p className="text-xs tabular-nums text-zinc-400">{k.usd > 0 ? `$${formatUSD(k.usd)}` : '$0,00'}</p>
                     </div>
                   </div>
                   <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
@@ -128,7 +154,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Kategori Bazli Harcamalar */}
+        {/* Kategori Bazlı Harcamalar */}
         <div>
           <h2 className="mb-4 text-xl font-bold">Kategori Bazlı Harcamalar</h2>
           <div className="space-y-3">

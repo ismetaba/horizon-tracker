@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { supabase } from '@/lib/supabase';
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const [authed, setAuthed] = useState(false);
   const [checking, setChecking] = useState(true);
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('horizon_auth');
-    if (token === 'authenticated_v1') {
+    if (token === 'authenticated_v2') {
       setAuthed(true);
     }
     setChecking(false);
@@ -19,15 +21,22 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Hardcoded password check
-    if (password === 'Horizon2025!') {
-      localStorage.setItem('horizon_auth', 'authenticated_v1');
+    setLoading(true);
+    const { data } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'app_password')
+      .single();
+
+    if (data && password === data.value) {
+      localStorage.setItem('horizon_auth', 'authenticated_v2');
       setAuthed(true);
       setError(false);
     } else {
       setError(true);
       setPassword('');
     }
+    setLoading(false);
   };
 
   if (checking) {
@@ -63,9 +72,10 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
             </div>
             <button
               type="submit"
-              className="w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+              disabled={loading}
+              className="w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
             >
-              Giriş Yap
+              {loading ? 'Kontrol ediliyor...' : 'Giriş Yap'}
             </button>
           </form>
         </div>

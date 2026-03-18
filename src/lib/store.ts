@@ -57,7 +57,7 @@ const defaultKurlar: Kur[] = [
   { id: 'k10', tarih: '2025-12-15', usdTl: 42.82 },
   { id: 'k11', tarih: '2026-01-15', usdTl: 43.18 },
   { id: 'k12', tarih: '2026-02-15', usdTl: 43.51 },
-  { id: 'k13', tarih: '2026-03-15', usdTl: 43.92 },
+  { id: 'k13', tarih: '2026-03-15', usdTl: 44.22 },
 ];
 
 function generateDefaultOdemeler(): Odeme[] {
@@ -105,8 +105,10 @@ const defaultHarcamalar: Harcama[] = [
   { id: 'h18', tarih: '2025-08-22', aciklama: 'Emlakçı', kategori: 'Emlakci', tlTutar: 2000000 },
   { id: 'h19', tarih: '2025-09-05', aciklama: 'Mimara Ödeme', kategori: 'Mimar', tlTutar: 15000 },
   { id: 'h20', tarih: '2025-09-05', aciklama: 'İfraz', kategori: 'Ifraz', tlTutar: 54000 },
+  { id: 'h20b', tarih: '2025-09-05', aciklama: 'İfraz', kategori: 'Ifraz', tlTutar: 54000 },
   { id: 'h21', tarih: '2025-09-05', aciklama: 'Ödeme', kategori: 'Diger', tlTutar: 15000 },
   { id: 'h22', tarih: '2025-09-22', aciklama: 'Mimara Ödeme', kategori: 'Mimar', tlTutar: 2300000 },
+  { id: 'h22b', tarih: '2025-10-28', aciklama: 'Mimara Ödeme', kategori: 'Mimar', tlTutar: 2300000 },
   { id: 'h23', tarih: '2025-10-28', aciklama: 'Mimara Ödeme', kategori: 'Mimar', tlTutar: 2400000 },
   { id: 'h24', tarih: '2025-10-28', aciklama: 'İfraz', kategori: 'Ifraz', tlTutar: 14879 },
   { id: 'h25', tarih: '2025-10-28', aciklama: 'İfraz', kategori: 'Ifraz', tlTutar: 16965 },
@@ -116,16 +118,16 @@ const defaultHarcamalar: Harcama[] = [
   { id: 'h29', tarih: '2025-12-15', aciklama: 'Ödeme', kategori: 'Diger', tlTutar: 5323.50 },
   { id: 'h30', tarih: '2025-12-15', aciklama: 'Ödeme', kategori: 'Tapu Harci', tlTutar: 11723.87 },
   { id: 'h31', tarih: '2025-12-15', aciklama: 'Mimara Ödeme', kategori: 'Mimar', tlTutar: 25276 },
-  { id: 'h32', tarih: '2025-12-15', aciklama: '104 no lu arsaların vergi ödemesi', kategori: 'Arsa', tlTutar: 340339 },
   { id: 'h33', tarih: '2026-02-15', aciklama: 'Ödeme', kategori: 'Diger', tlTutar: 12318 },
   { id: 'h34', tarih: '2026-02-15', aciklama: 'Ödeme', kategori: 'Diger', tlTutar: 12318 },
   { id: 'h35', tarih: '2026-02-15', aciklama: 'Ödeme', kategori: 'Diger', tlTutar: 14874 },
   { id: 'h36', tarih: '2026-02-15', aciklama: 'Harç', kategori: 'Tapu Harci', tlTutar: 86897 },
   { id: 'h37', tarih: '2026-02-15', aciklama: 'Ödeme', kategori: 'Diger', tlTutar: 9260 },
   { id: 'h38', tarih: '2026-02-15', aciklama: 'Ödeme', kategori: 'Diger', tlTutar: 10230 },
-  { id: 'h39', tarih: '2026-02-15', aciklama: 'Ödeme', kategori: 'Diger', tlTutar: 9260 },
-  { id: 'h40', tarih: '2026-02-15', aciklama: 'Ruhsat', kategori: 'Ruhsat', tlTutar: 100000 },
-  { id: 'h41', tarih: '2026-02-15', aciklama: 'Ödeme', kategori: 'Diger', tlTutar: 255157 },
+  { id: 'h39', tarih: '2026-03-15', aciklama: 'Ödeme', kategori: 'Diger', tlTutar: 9260 },
+  { id: 'h40', tarih: '2026-03-15', aciklama: 'Ruhsat', kategori: 'Ruhsat', tlTutar: 100000 },
+  { id: 'h42', tarih: '2026-03-15', aciklama: 'Ortaklık', kategori: 'Diger', tlTutar: 300000 },
+  { id: 'h43', tarih: '2026-03-15', aciklama: 'Ödeme', kategori: 'Diger', tlTutar: 450000 },
 ];
 
 // --- CRUD Operations ---
